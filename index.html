@@ -3,141 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QQQM 估值中心 V1.5 - 折现回归版</title>
+    <title>QQQM 估值中心 V1.6 - 估值水位红绿灯</title>
     <style>
         :root {
             --bg-color: #0d1117; --card-bg: #161b22; --text-color: #e6edf3;
-            --nasdaq-blue: #2f81f7; --green: #3fb950; --red: #f85149; --border: #30363d; --cyan: #58a6ff; --gold: #d29922; --purple: #bc8cff;
+            --nasdaq-blue: #2f81f7; --green: #3fb950; --yellow: #d29922; --red: #f85149; --border: #30363d; --cyan: #58a6ff; --purple: #bc8cff;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; display: flex; flex-direction: column; align-items: center; line-height: 1.5; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 1100px; width: 100%; }
-        header { text-align: center; padding: 32px 0; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #010409 0%, var(--bg-color) 100%); border-radius: 16px; margin-bottom: 32px; }
-        h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; }
+        header { text-align: center; padding: 24px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+        h1 { margin: 0; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; }
         
-        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 24px; }
-        .panel { background-color: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border); }
-        .panel-title { color: var(--nasdaq-blue); font-size: 1.05rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px; font-weight: 600; }
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .panel { background-color: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .panel-title { color: var(--nasdaq-blue); font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; font-weight: 600; }
         
-        .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .input-group label { font-size: 0.88rem; color: #8b949e; }
-        .input-group input, .input-group select { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; width: 110px; text-align: right; font-size: 1rem; }
+        .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .input-group label { font-size: 0.85rem; color: #8b949e; }
+        .input-group input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100px; text-align: right; font-size: 1rem; }
         
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 32px 0; }
-        .card { background-color: var(--card-bg); padding: 32px; border-radius: 14px; text-align: center; border: 1px solid var(--border); border-top-width: 6px; }
-        .metric { font-size: 2.8rem; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.04em; }
-        .metric-sub { font-size: 0.88rem; color: #8b949e; background: #0d1117; padding: 6px 16px; border-radius: 20px; display: inline-block; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background-color: var(--card-bg); padding: 24px; border-radius: 14px; text-align: center; border: 1px solid var(--border); border-top: 5px solid var(--nasdaq-blue); }
+        .metric { font-size: 2.4rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
+        .metric-sub { font-size: 0.85rem; color: #8b949e; }
 
-        .status-tag { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; margin-top: 14px; display: inline-block; text-transform: uppercase; }
-        .status-green { background: rgba(63, 185, 80, 0.1); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.2); }
-        .status-red { background: rgba(248, 81, 73, 0.1); color: var(--red); border: 1px solid rgba(248, 81, 73, 0.2); }
-
-        .formula-box { background-color: rgba(47, 129, 247, 0.05); border-left: 4px solid var(--nasdaq-blue); padding: 20px; margin-bottom: 32px; font-size: 0.9rem; color: #8b949e; border-radius: 0 12px 12px 0;}
+        /* 水位表样式 */
+        .water-level-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .water-level-table th, .water-level-table td { padding: 14px; text-align: center; border-bottom: 1px solid var(--border); }
+        .water-level-table th { background: #010409; color: var(--nasdaq-blue); font-size: 0.85rem; text-transform: uppercase; }
+        .light { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .light-green { background: var(--green); box-shadow: 0 0 10px var(--green); }
+        .light-yellow { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+        .light-red { background: var(--red); box-shadow: 0 0 10px var(--red); }
+        
+        .current-row { background: rgba(47, 129, 247, 0.1); border: 2px solid var(--nasdaq-blue); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>🚀 QQQM 估值中心 <span style="opacity: 0.5; font-weight: 300;">V1.5</span></h1>
-        <p style="color: #8b949e; margin-top: 8px;">修复折现定价引擎 | 现值基于 [EPS × PE] 终值折回</p>
+        <h1>🚀 QQQM 火控中心 V1.6 <span style="font-weight:300; opacity:0.6;">水位红绿灯版</span></h1>
+        <p style="color:#8b949e; margin-top:5px;">当前实时价格: $ <span id="header_price">250.00</span></p>
     </header>
 
     <div class="grid-layout">
         <div class="panel">
-            <div class="panel-title">📈 第一步：盈利锚点</div>
-            <div class="input-group"><label>财报发布时股价 ($)</label><input type="number" id="base_price" value="218.45" oninput="calculate()"></div>
-            <div class="input-group"><label>财报滚动市盈率 (PE)</label><input type="number" id="base_pe" value="33.62" oninput="calculate()"></div>
-            <div class="input-group"><label>当前 ROE (%)</label><input type="number" id="in_roe" value="32.92" oninput="calculate()"></div>
-            <div style="margin-top: 20px; font-size: 0.85rem; color: #8b949e;">* 当前 EPS 锚点: <strong id="out_eps" style="color:#fff;">$6.50</strong></div>
+            <div class="panel-title">📊 实时基本面锚点</div>
+            <div class="input-group"><label>财报发布股价</label><input type="number" id="base_price" value="218.45" oninput="calculate()"></div>
+            <div class="input-group"><label>财报滚动 PE</label><input type="number" id="base_pe" value="33.62" oninput="calculate()"></div>
+            <div style="margin-top: 15px; font-size: 0.85rem; color: #8b949e;">* 自动推算 EPS: <strong id="out_eps" style="color:#fff;">$6.50</strong></div>
         </div>
 
-        <div class="panel" style="border-top: 3px solid var(--purple);">
-            <div class="panel-title" style="color: var(--purple);">⚡ 第二步：设定回报要求与基准</div>
+        <div class="panel" style="border-top: 3px solid var(--yellow);">
+            <div class="panel-title" style="color:var(--yellow)">⚡ 价格压力测试</div>
             <div class="input-group">
-                <label>要求回报率 / 折现率 (%)</label>
-                <input type="number" id="target_return" value="10.0" oninput="calculate()" style="color:var(--purple); font-weight:bold;">
+                <label>要求回报率 (%)</label>
+                <input type="number" id="target_ret" value="10.0" oninput="calculate()">
             </div>
-            <div class="input-group"><label>预期年化增长 (%)</label><input type="number" id="in_growth" value="12.0" oninput="calculate()"></div>
             <div class="input-group">
-                <label>参考估值基准 (PE)</label>
-                <select id="benchmark_pe" onchange="calculate()">
-                    <option value="32.5">🚀 3Y 平均 (32.5)</option>
-                    <option value="30.14" selected>⚖️ 5Y 平均 (30.1)</option>
-                    <option value="26.72">🛡️ 10Y 平均 (26.7)</option>
-                </select>
+                <label>市场实时价 ($)</label>
+                <input type="number" id="current_price" value="250.00" oninput="calculate()" style="color:var(--yellow); font-weight:bold;">
             </div>
         </div>
     </div>
 
-    <div class="metrics-grid">
-        <div class="card" style="border-top-color: var(--purple);">
-            <h3>折现理论合理价</h3>
-            <div class="metric" id="out_fair_price">$ 0.00</div>
-            <div class="metric-sub">为达标 <span id="txt_ret">10</span>% 回报的最高出价</div>
-        </div>
-        
-        <div class="card" style="border-top-color: var(--nasdaq-blue);">
-            <h3>实时市盈率 (PE)</h3>
-            <div class="metric" id="out_real_pe">38.5</div>
-            <div class="input-group" style="justify-content:center; margin-top:10px;">
-                <input type="number" id="current_price" value="250.00" oninput="calculate()" style="width:140px; text-align:center; font-size:1.2rem; border-color:var(--nasdaq-blue);">
-            </div>
-        </div>
-
-        <div class="card" id="card_margin">
-            <h3>安全边际</h3>
-            <div class="metric" id="out_margin">0.0%</div>
-            <div class="metric-sub" id="margin_text">相对于理论合理价</div>
-            <br><div id="status_margin" class="status-tag">分析中</div>
-        </div>
+    <div class="panel" style="margin-bottom: 20px;">
+        <div class="panel-title">🚥 估值水位探测器 (基于 EPS $6.50)</div>
+        <table class="water-level-table">
+            <thead>
+                <tr>
+                    <th>估值状态</th>
+                    <th>对应 PE</th>
+                    <th>对应价格</th>
+                    <th>建议操作</th>
+                </tr>
+            </thead>
+            <tbody id="water_body">
+                </tbody>
+        </table>
     </div>
 
-    <div class="formula-box">
-        <strong>🧠 定价逻辑说明：</strong> 
-        该模型通过下年 EPS 结合所选周期的历史平均 PE 算出“一年后目标价”，再按你的要求回报率折算回当前。
-        若计算出的“理论合理价”低于现价，说明目前估值溢价已透支了你的预期回报。
+    <div style="font-size: 0.85rem; color: #6e7681; background: #010409; padding: 15px; border-radius: 8px;">
+        💡 <strong>红绿灯逻辑：</strong> <br>
+        🟢 <strong>绿色 (PE < 30)：</strong> 处于 5-10 年历史均值区，极具性价比。<br>
+        🟡 <strong>黄色 (PE 30-35)：</strong> 处于 3 年历史高效率运行区，合理但无厚保护。<br>
+        🔴 <strong>红色 (PE > 35)：</strong> 处于情绪狂热期，溢价显著，谨防回撤。
     </div>
 </div>
 
 <script>
     function calculate() {
-        const basePrice = 218.45; 
-        const basePe = 33.62; 
-        const currentPrice = parseFloat(document.getElementById('current_price').value) || 250;
-        const targetRet = parseFloat(document.getElementById('target_return').value) / 100;
-        const growth = parseFloat(document.getElementById('in_growth').value) / 100;
-        const histPe = parseFloat(document.getElementById('benchmark_pe').value);
+        const bp = parseFloat(document.getElementById('base_price').value);
+        const bpe = parseFloat(document.getElementById('base_pe').value);
+        const cp = parseFloat(document.getElementById('current_price').value);
         
-        // 1. 推算 EPS 和 实时 PE
-        const eps = basePrice / basePe;
-        const realPe = currentPrice / eps;
+        const eps = bp / bpe;
         document.getElementById('out_eps').innerText = "$" + eps.toFixed(2);
-        document.getElementById('out_real_pe').innerText = realPe.toFixed(1);
-        document.getElementById('txt_ret').innerText = (targetRet * 100).toFixed(1);
+        document.getElementById('header_price').innerText = cp.toFixed(2);
 
-        // 2. 修正后的折现定价
-        // 理论价 = [EPS * (1+g) * 历史PE] / (1+r)
-        const fairPrice = (eps * (1 + growth) * histPe) / (1 + targetRet);
-        document.getElementById('out_fair_price').innerText = "$ " + fairPrice.toFixed(2);
+        const peLevels = [
+            { label: "10Y 保守中枢", pe: 26.72, desc: "绝对击球区" }, //
+            { label: "5Y 均衡均值", pe: 30.14, desc: "舒适定投区" }, //
+            { label: "3Y 激进运行", pe: 32.50, desc: "溢价观察区" }, //
+            { label: "26/01 财报位", pe: 33.62, desc: "近期高位" }, //
+            { label: "当前情绪位", pe: (cp / eps).toFixed(1), desc: "估值透支", isCurrent: true },
+            { label: "25 财报顶点", pe: 41.57, desc: "极度危险区" } // 
+        ];
 
-        // 3. 安全边际
-        const margin = ((fairPrice - currentPrice) / fairPrice) * 100;
-        document.getElementById('out_margin').innerText = (margin > 0 ? "+" : "") + margin.toFixed(1) + "%";
-        
-        const cardMargin = document.getElementById('card_margin');
-        const statusMargin = document.getElementById('status_margin');
-        const marginText = document.getElementById('margin_text');
+        // 按 PE 排序
+        peLevels.sort((a, b) => a.pe - b.pe);
 
-        if (margin > 0) {
-            cardMargin.style.borderTopColor = "var(--green)";
-            statusMargin.innerText = "价值区间"; statusMargin.className = "status-tag status-green";
-            marginText.innerText = "具备盈利安全垫";
-        } else {
-            cardMargin.style.borderTopColor = "var(--red)";
-            statusMargin.innerText = "溢价运行"; statusMargin.className = "status-tag status-red";
-            marginText.innerText = "回报率可能无法达标";
-        }
+        const tbody = document.getElementById('water_body');
+        tbody.innerHTML = "";
+
+        peLevels.forEach(item => {
+            const price = eps * item.pe;
+            const tr = document.createElement('tr');
+            if(item.isCurrent) tr.className = "current-row";
+
+            let lightClass = "light-red";
+            if(item.pe < 31) lightClass = "light-green";
+            else if(item.pe < 36) lightClass = "light-yellow";
+
+            tr.innerHTML = `
+                <td style="text-align:left;"><span class="light ${lightClass}"></span>${item.label}</td>
+                <td>${item.pe}</td>
+                <td style="font-weight:bold; color:#fff;">$ ${price.toFixed(2)}</td>
+                <td style="font-size:0.85rem;">${item.desc}</td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
+
     window.onload = calculate;
 </script>
 </body>
