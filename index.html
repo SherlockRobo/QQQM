@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QQQM 估值火控中心 V1.7 - 全能版</title>
+    <title>QQQM 估值火控中心 V1.8 - 战略买入版</title>
     <style>
         :root {
             --bg-color: #0d1117; --card-bg: #161b22; --text-color: #e6edf3;
-            --nasdaq-blue: #2f81f7; --green: #3fb950; --yellow: #d29922; --red: #f85149; --border: #30363d; --purple: #bc8cff;
+            --nasdaq-blue: #2f81f7; --green: #3fb950; --yellow: #d29922; --red: #f85149; --border: #30363d; --cyan: #58a6ff; --purple: #bc8cff; --gold: #ffd700;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 1150px; width: 100%; }
@@ -35,38 +35,30 @@
         .light-yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
         .light-red { background: var(--red); box-shadow: 0 0 8px var(--red); }
         .current-row { background: rgba(47, 129, 247, 0.1); outline: 1px solid var(--nasdaq-blue); }
+        .target-row { background: rgba(255, 215, 0, 0.05); outline: 1px dashed var(--gold); }
 
         .formula-box { background-color: rgba(47, 129, 247, 0.05); border-left: 4px solid var(--nasdaq-blue); padding: 15px; margin-bottom: 24px; font-size: 0.88rem; color: #8b949e; border-radius: 0 12px 12px 0; }
+        
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        .compare-item { background: #0d1117; padding: 10px; border-radius: 8px; text-align: left; }
+        .compare-label { font-size: 0.75rem; color: #8b949e; margin-bottom: 4px; }
+        .compare-val { font-size: 1.1rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>🚀 QQQM 火控中心 V1.7 <span style="font-weight:300; opacity:0.6;">全能版</span></h1>
-        <p style="color:#8b949e; margin-top:5px;">当前实时价格: $ <span id="header_price">250.00</span> | 股息率: <span id="header_div">0.51</span>%</p>
+        <h1>🚀 QQQM 火控中心 V1.8 <span style="font-weight:300; opacity:0.6;">战略买入对比版</span></h1>
+        <p style="color:#8b949e; margin-top:5px;">当前实时价格: $ <span id="header_price">250.00</span> | 股息率: 0.51%</p>
     </header>
 
     <div class="grid-layout">
         <div class="panel">
-            <div class="panel-title">📊 核心基本面锚点</div>
-            <div class="input-group"><label>财报发布时股价</label><input type="number" id="base_price" value="218.45" oninput="calculate()"></div>
-            <div class="input-group"><label>财报滚动 PE</label><input type="number" id="base_pe" value="33.62" oninput="calculate()"></div>
-            <div class="input-group"><label>当前 ROE (%)</label><input type="number" id="in_roe" value="32.92" oninput="calculate()"></div>
-            <div class="input-group"><label>最新 SEC 股息率 (%)</label><input type="number" id="in_div" value="0.51" oninput="calculate()"></div>
-            <div style="margin-top: 15px; font-size: 0.85rem; color: #8b949e;">* 当前 EPS 锚点: <strong id="out_eps" style="color:#fff;">$6.50</strong></div>
-        </div>
-
-        <div class="panel" style="border-top: 3px solid var(--purple);">
-            <div class="panel-title" style="color:var(--purple)">⚡ 投资收益与增长预期</div>
-            <div class="input-group">
-                <label>要求回报率 (折现率 %)</label>
-                <input type="number" id="target_ret" value="10.0" oninput="calculate()" style="color:var(--purple); font-weight:bold;">
-            </div>
-            <div class="input-group">
-                <label>预计年化增长率 (%)</label>
-                <input type="number" id="in_growth" value="12.0" oninput="calculate()">
-            </div>
+            <div class="panel-title">📊 核心基本面与增长要求</div>
+            <div class="input-group"><label>EPS 盈利锚点 ($)</label><input type="number" id="in_eps_val" value="6.50" oninput="calculate()"></div>
+            <div class="input-group"><label>要求回报率 (%)</label><input type="number" id="target_ret" value="10.0" oninput="calculate()"></div>
+            <div class="input-group"><label>预期增长率 (%)</label><input type="number" id="in_growth" value="12.0" oninput="calculate()"></div>
             <div class="input-group">
                 <label>参考估值周期</label>
                 <select id="benchmark_select" onchange="calculate()">
@@ -75,9 +67,31 @@
                     <option value="26.72">🛡️ 10Y 保守 (26.7)</option>
                 </select>
             </div>
+        </div>
+
+        <div class="panel" style="border-top: 3px solid var(--gold);">
+            <div class="panel-title" style="color:var(--gold)">⚡ 预计购买价格对比</div>
             <div class="input-group">
-                <label style="color:var(--yellow); font-weight:bold;">实时现价输入 ($)</label>
-                <input type="number" id="current_price" value="250.00" oninput="calculate()" style="border-color:var(--yellow);">
+                <label style="color:var(--gold); font-weight:bold;">拟定购买价格 ($)</label>
+                <input type="number" id="proposed_price" value="200.00" oninput="calculate()" style="border-color:var(--gold); color:var(--gold); font-weight:bold;">
+            </div>
+            <div class="compare-grid">
+                <div class="compare-item">
+                    <div class="compare-label">对比市场现价</div>
+                    <div id="gap_market" class="compare-val">-0.0%</div>
+                </div>
+                <div class="compare-item">
+                    <div class="compare-label">对比折现合理价</div>
+                    <div id="gap_fair" class="compare-val">-0.0%</div>
+                </div>
+                <div class="compare-item">
+                    <div class="compare-label">对比5Y中枢价</div>
+                    <div id="gap_hist" class="compare-val">-0.0%</div>
+                </div>
+                <div class="compare-item">
+                    <div class="compare-label">拟入场 PE</div>
+                    <div id="proposed_pe" class="compare-val">0.0</div>
+                </div>
             </div>
         </div>
     </div>
@@ -86,29 +100,32 @@
         <div class="card" style="border-top-color: var(--purple);">
             <h3>折现理论合理价</h3>
             <div class="metric" id="out_fair_price">$ 0.00</div>
-            <div class="metric-sub">基于 <span id="txt_ret">10</span>% 要求回报</div>
+            <div class="metric-sub">为达标 <span id="txt_ret">10</span>% 回报</div>
         </div>
-        <div class="card" id="card_roe" style="border-top-color: var(--cyan);">
-            <h3>ROE 效率偏离</h3>
-            <div class="metric" id="out_roe_gap">+0%</div>
-            <div class="metric-sub">对比周期均值</div>
+        <div class="card" style="border-top-color: var(--gold);">
+            <h3>当前市场水位</h3>
+            <div class="metric" id="out_real_pe">38.5</div>
+            <div class="metric-sub">当前实时 PE 状态</div>
+            <div class="input-group" style="justify-content:center; margin-top:10px;">
+                <input type="number" id="current_price" value="250.00" oninput="calculate()" style="width:110px; text-align:center;">
+            </div>
         </div>
         <div class="card" style="border-top-color: var(--green);">
             <h3>预期全收益 (Total)</h3>
-            <div class="metric" id="out_total_yield">0%</div>
-            <div class="metric-sub">增长 (<span id="txt_growth">12</span>%) + 股息 (<span id="txt_div">0.5</span>%)</div>
+            <div class="metric" id="out_total_yield">12.51%</div>
+            <div class="metric-sub">增长 + 股息收益</div>
         </div>
     </div>
 
     <div class="panel" style="margin-bottom: 20px;">
-        <div class="panel-title">🚥 估值水位探测器</div>
+        <div class="panel-title">🚥 综合估值水位探测器</div>
         <table class="water-level-table">
             <thead>
                 <tr>
-                    <th>估值状态</th>
+                    <th>估值阶段</th>
                     <th>对应 PE</th>
-                    <th>对应价格</th>
-                    <th>说明</th>
+                    <th>价格参考</th>
+                    <th>操作指引</th>
                 </tr>
             </thead>
             <tbody id="water_body"></tbody>
@@ -116,54 +133,60 @@
     </div>
 
     <div class="formula-box">
-        <strong>🧠 火控逻辑：</strong> 理论合理价采用 <strong>[EPS × (1 + 预计增长) × 周期PE] ÷ (1 + 要求回报)</strong>。
-        目前的 ROE 为 <strong>32.92%</strong>，虽然较 2025Q4 的 44.73%  有所回落，但仍远高于 10 年平均的 25%。
+        <strong>🧠 战略提示：</strong> 
+        当你的“拟定购买价”对比现价呈现显著负比例时，说明你正在耐心等待“安全边际”。
+        目前的纳指 ROE 为 <strong>32.92%</strong>，只要盈利能力不发生崩溃，跌向 <strong>10Y 保守中枢 ($173.68)</strong> 将是确定性极高的“捡钱”机会。
     </div>
 </div>
 
 <script>
-    const HIST_ROE_MAP = { "32.5": 32.5, "30.14": 31.0, "26.72": 25.0 };
-
     function calculate() {
-        const bp = parseFloat(document.getElementById('base_price').value) || 218.45;
-        const bpe = parseFloat(document.getElementById('base_pe').value) || 33.62;
-        const inRoe = parseFloat(document.getElementById('in_roe').value) || 32.92;
-        const divYield = parseFloat(document.getElementById('in_div').value) || 0.51;
+        const eps = parseFloat(document.getElementById('in_eps_val').value) || 6.50;
         const targetRet = parseFloat(document.getElementById('target_ret').value) / 100;
         const growth = parseFloat(document.getElementById('in_growth').value) / 100;
-        const cp = parseFloat(document.getElementById('current_price').value) || 250;
         const histPe = parseFloat(document.getElementById('benchmark_select').value);
         
-        const eps = bp / bpe;
-        document.getElementById('out_eps').innerText = "$" + eps.toFixed(2);
-        document.getElementById('header_price').innerText = cp.toFixed(2);
-        document.getElementById('header_div').innerText = divYield.toFixed(2);
+        const currentPrice = parseFloat(document.getElementById('current_price').value) || 250;
+        const proposedPrice = parseFloat(document.getElementById('proposed_price').value) || 200;
+
+        document.getElementById('header_price').innerText = currentPrice.toFixed(2);
         document.getElementById('txt_ret').innerText = (targetRet * 100).toFixed(1);
-        document.getElementById('txt_growth').innerText = (growth * 100).toFixed(1);
-        document.getElementById('txt_div').innerText = divYield.toFixed(2);
 
-        // 1. 折现合理价
+        // 1. 基本计算
         const fairPrice = (eps * (1 + growth) * histPe) / (1 + targetRet);
+        const realPe = currentPrice / eps;
+        const proposedPe = proposedPrice / eps;
+
         document.getElementById('out_fair_price').innerText = "$ " + fairPrice.toFixed(2);
+        document.getElementById('out_real_pe').innerText = realPe.toFixed(1);
+        document.getElementById('proposed_pe').innerText = proposedPe.toFixed(1);
 
-        // 2. ROE 偏离度
-        const histRoe = HIST_ROE_MAP[histPe.toString()];
-        const roeGap = ((inRoe - histRoe) / histRoe) * 100;
-        const roeEl = document.getElementById('out_roe_gap');
-        roeEl.innerText = (roeGap > 0 ? "+" : "") + roeGap.toFixed(1) + "%";
-        roeEl.style.color = roeGap >= 0 ? "var(--green)" : "var(--red)";
+        // 2. 差异比例计算
+        const gapMarket = ((proposedPrice - currentPrice) / currentPrice) * 100;
+        const gapFair = ((proposedPrice - fairPrice) / fairPrice) * 100;
+        const gapHist = ((proposedPrice - (eps * 30.14)) / (eps * 30.14)) * 100;
 
-        // 3. 全收益
-        const totalYield = (growth * 100) + divYield;
-        document.getElementById('out_total_yield').innerText = totalYield.toFixed(2) + "%";
+        const updateGap = (id, val) => {
+            const el = document.getElementById(id);
+            el.innerText = (val > 0 ? "+" : "") + val.toFixed(1) + "%";
+            el.style.color = val < 0 ? "var(--green)" : "var(--red)";
+        };
+        updateGap('gap_market', gapMarket);
+        updateGap('gap_fair', gapFair);
+        updateGap('gap_hist', gapHist);
+
+        // 3. 全收益 (保持静态 0.51% 股息)
+        document.getElementById('out_total_yield').innerText = ( (growth * 100) + 0.51).toFixed(2) + "%";
 
         // 4. 水位表更新
         const peLevels = [
             { label: "10Y 保守中枢", pe: 26.72, desc: "均值回归位" },
             { label: "5Y 均衡均值", pe: 30.14, desc: "合理中轴" },
             { label: "3Y 激进运行", pe: 32.50, desc: "高效率溢价" },
-            { label: "当前情绪位", pe: (cp / eps).toFixed(1), desc: "实时溢价", isCurrent: true },
-            { label: "25 财报顶点", pe: 41.57, desc: "极度危险" }
+            { label: "26/01 财报位", pe: 33.62, desc: "近期高点参考" },
+            { label: "当前市场位", pe: realPe.toFixed(1), desc: "实时溢价运行", isCurrent: true },
+            { label: "拟定买入位", pe: proposedPe.toFixed(1), desc: "你的战略挂单", isProposed: true },
+            { label: "25 财报顶点", pe: 41.57, desc: "极度危险区" }
         ];
         peLevels.sort((a, b) => a.pe - b.pe);
 
@@ -173,6 +196,8 @@
             const price = eps * item.pe;
             const tr = document.createElement('tr');
             if(item.isCurrent) tr.className = "current-row";
+            if(item.isProposed) tr.className = "target-row";
+            
             let lColor = item.pe < 31 ? "light-green" : (item.pe < 36 ? "light-yellow" : "light-red");
             tr.innerHTML = `<td><span class="light ${lColor}"></span>${item.label}</td><td>${item.pe}</td><td style="font-weight:bold;">$ ${price.toFixed(2)}</td><td style="font-size:0.8rem;">${item.desc}</td>`;
             tbody.appendChild(tr);
