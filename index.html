@@ -3,160 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QQQM 估值火控中心 V1.4 - 折现率定价版</title>
+    <title>QQQM 估值中心 V1.5 - 折现回归版</title>
     <style>
         :root {
             --bg-color: #0d1117; --card-bg: #161b22; --text-color: #e6edf3;
             --nasdaq-blue: #2f81f7; --green: #3fb950; --red: #f85149; --border: #30363d; --cyan: #58a6ff; --gold: #d29922; --purple: #bc8cff;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; display: flex; flex-direction: column; align-items: center; line-height: 1.5; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 24px; display: flex; flex-direction: column; align-items: center; line-height: 1.5; }
         .container { max-width: 1100px; width: 100%; }
         header { text-align: center; padding: 32px 0; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #010409 0%, var(--bg-color) 100%); border-radius: 16px; margin-bottom: 32px; }
-        h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; font-weight: 600; }
-        .sub-header { margin-top: 8px; color: #8b949e; font-size: 0.95rem; }
-
+        h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; }
+        
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; margin-bottom: 24px; }
-        .panel { background-color: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border); transition: transform 0.2s; }
-        .panel-title { color: var(--nasdaq-blue); font-size: 1.05rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px; font-weight: 600; display: flex; align-items: center; }
+        .panel { background-color: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border); }
+        .panel-title { color: var(--nasdaq-blue); font-size: 1.05rem; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px; font-weight: 600; }
         
         .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .input-group label { font-size: 0.88rem; color: #8b949e; font-weight: 500; }
-        .input-group input, .input-group select { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 8px; width: 110px; text-align: right; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
-        .input-group input:focus { border-color: var(--nasdaq-blue); outline: none; }
+        .input-group label { font-size: 0.88rem; color: #8b949e; }
+        .input-group input, .input-group select { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; width: 110px; text-align: right; font-size: 1rem; }
         
-        .benchmark-select { width: 100% !important; background: #0d1117; border: 1px solid var(--nasdaq-blue); color: var(--nasdaq-blue); padding: 12px; border-radius: 8px; font-weight: 600; text-align: center !important; cursor: pointer; margin-bottom: 20px;}
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 32px 0; }
+        .card { background-color: var(--card-bg); padding: 32px; border-radius: 14px; text-align: center; border: 1px solid var(--border); border-top-width: 6px; }
+        .metric { font-size: 2.8rem; font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.04em; }
+        .metric-sub { font-size: 0.88rem; color: #8b949e; background: #0d1117; padding: 6px 16px; border-radius: 20px; display: inline-block; }
 
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin: 32px 0; }
-        .card { background-color: var(--card-bg); padding: 28px; border-radius: 14px; text-align: center; border: 1px solid var(--border); border-top-width: 6px; }
-        .card h3 { margin: 0 0 12px 0; color: #8b949e; font-size: 0.95rem; font-weight: 500; }
-        .metric { font-size: 2.6rem; font-weight: 700; color: #fff; margin-bottom: 8px; letter-spacing: -0.03em; }
-        .metric-sub { font-size: 0.88rem; color: #8b949e; background: #0d1117; padding: 6px 12px; border-radius: 20px; display: inline-block; }
-
-        .status-tag { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; margin-top: 14px; display: inline-block; text-transform: uppercase; letter-spacing: 0.03em; }
+        .status-tag { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; margin-top: 14px; display: inline-block; text-transform: uppercase; }
         .status-green { background: rgba(63, 185, 80, 0.1); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.2); }
         .status-red { background: rgba(248, 81, 73, 0.1); color: var(--red); border: 1px solid rgba(248, 81, 73, 0.2); }
-        .status-cyan { background: rgba(88, 166, 255, 0.1); color: var(--cyan); border: 1px solid rgba(88, 166, 255, 0.2); }
 
-        .formula-box { background-color: rgba(47, 129, 247, 0.05); border-left: 4px solid var(--nasdaq-blue); padding: 20px; margin-bottom: 32px; font-size: 0.92rem; color: #8b949e; border-radius: 0 12px 12px 0; line-height: 1.6;}
+        .formula-box { background-color: rgba(47, 129, 247, 0.05); border-left: 4px solid var(--nasdaq-blue); padding: 20px; margin-bottom: 32px; font-size: 0.9rem; color: #8b949e; border-radius: 0 12px 12px 0;}
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>🚀 QQQM 估值中心 <span style="opacity: 0.5; font-weight: 300;">V1.4</span></h1>
-        <p class="sub-header">基于折现率模型与历史中枢对标 | 实时价格: 250 USD</p>
+        <h1>🚀 QQQM 估值中心 <span style="opacity: 0.5; font-weight: 300;">V1.5</span></h1>
+        <p style="color: #8b949e; margin-top: 8px;">修复折现定价引擎 | 现值基于 [EPS × PE] 终值折回</p>
     </header>
 
     <div class="grid-layout">
         <div class="panel">
-            <div class="panel-title">📉 第一步：盈利锚点 (Fact Sheet)</div>
-            <div class="input-group">
-                <label>财报发布股价 ($)</label>
-                <input type="number" id="base_price" value="218.45" step="0.01" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>财报滚动市盈率 (PE)</label>
-                <input type="number" id="base_pe" value="33.62" step="0.01" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>当前 ROE 强度 (%)</label>
-                <input type="number" id="in_roe" value="32.92" step="0.1" oninput="calculate()">
-            </div>
-            <div style="margin-top: 20px; font-size: 0.85rem; color: #6e7681;">
-                * 自动核算当前 EPS: <strong id="out_eps" style="color:#fff;">$0.00</strong> [cite: 13, 14, 16]
-            </div>
+            <div class="panel-title">📈 第一步：盈利锚点</div>
+            <div class="input-group"><label>财报发布时股价 ($)</label><input type="number" id="base_price" value="218.45" oninput="calculate()"></div>
+            <div class="input-group"><label>财报滚动市盈率 (PE)</label><input type="number" id="base_pe" value="33.62" oninput="calculate()"></div>
+            <div class="input-group"><label>当前 ROE (%)</label><input type="number" id="in_roe" value="32.92" oninput="calculate()"></div>
+            <div style="margin-top: 20px; font-size: 0.85rem; color: #8b949e;">* 当前 EPS 锚点: <strong id="out_eps" style="color:#fff;">$6.50</strong></div>
         </div>
 
         <div class="panel" style="border-top: 3px solid var(--purple);">
-            <div class="panel-title" style="color: var(--purple);">⚡ 第二步：设定折现率与回报要求</div>
-            
+            <div class="panel-title" style="color: var(--purple);">⚡ 第二步：设定回报要求与基准</div>
             <div class="input-group">
-                <label style="color:var(--purple); font-weight:bold;">要求回报率 / 折现率 (%)</label>
-                <input type="number" id="target_return" value="5.0" step="0.1" oninput="calculate()" style="border-color:var(--purple); color:var(--purple); font-weight:bold;">
+                <label>要求回报率 / 折现率 (%)</label>
+                <input type="number" id="target_return" value="10.0" oninput="calculate()" style="color:var(--purple); font-weight:bold;">
             </div>
-
+            <div class="input-group"><label>预期年化增长 (%)</label><input type="number" id="in_growth" value="12.0" oninput="calculate()"></div>
             <div class="input-group">
-                <label>预期长期年化增长 (%)</label>
-                <input type="number" id="in_growth" value="12.0" step="0.1" oninput="calculate()">
-            </div>
-
-            <div class="input-group">
-                <label style="color:var(--gold);">实时价格推测 ($)</label>
-                <input type="number" id="current_price" value="250.00" step="0.01" oninput="calculate()">
-            </div>
-            
-            <div style="font-size: 0.82rem; color: #8b949e; margin-top: 8px;">
-                💡 注：折现率体现你对资金的时间成本要求
+                <label>参考估值基准 (PE)</label>
+                <select id="benchmark_pe" onchange="calculate()">
+                    <option value="32.5">🚀 3Y 平均 (32.5)</option>
+                    <option value="30.14" selected>⚖️ 5Y 平均 (30.1)</option>
+                    <option value="26.72">🛡️ 10Y 平均 (26.7)</option>
+                </select>
             </div>
         </div>
     </div>
 
     <div class="metrics-grid">
-        <div class="card" id="card_fair" style="border-top-color: var(--purple);">
+        <div class="card" style="border-top-color: var(--purple);">
             <h3>折现理论合理价</h3>
             <div class="metric" id="out_fair_price">$ 0.00</div>
-            <div class="metric-sub">基于 <span id="txt_ret">5.0</span>% 折现率推导</div>
+            <div class="metric-sub">为达标 <span id="txt_ret">10</span>% 回报的最高出价</div>
         </div>
         
-        <div class="card" id="card_pe">
+        <div class="card" style="border-top-color: var(--nasdaq-blue);">
             <h3>实时市盈率 (PE)</h3>
             <div class="metric" id="out_real_pe">38.5</div>
-            <div class="metric-sub">对应当前 250$ 价格</div>
-            <br><div id="status_pe" class="status-tag">分析中</div>
+            <div class="input-group" style="justify-content:center; margin-top:10px;">
+                <input type="number" id="current_price" value="250.00" oninput="calculate()" style="width:140px; text-align:center; font-size:1.2rem; border-color:var(--nasdaq-blue);">
+            </div>
         </div>
 
-        <div class="card" id="card_margin" style="border-top-color: var(--gold);">
-            <h3>买入安全边际</h3>
+        <div class="card" id="card_margin">
+            <h3>安全边际</h3>
             <div class="metric" id="out_margin">0.0%</div>
             <div class="metric-sub" id="margin_text">相对于理论合理价</div>
-        </div>
-    </div>
-
-    <div class="panel" style="margin-bottom: 32px;">
-        <div class="panel-title">⚖️ 第三步：历史中枢压力测试 (3Y/5Y/10Y)</div>
-        <select id="benchmark_period" class="benchmark-select" onchange="calculate()">
-            <option value="3">🚀 3年平均 (激进 PE: 32.5)</option>
-            <option value="5" selected>⚖️ 5年平均 (均衡 PE: 30.1)</option>
-            <option value="10">🛡️ 10年平均 (保守 PE: 26.7)</option>
-        </select>
-        <div style="display:flex; justify-content: space-around; text-align: center;">
-            <div>
-                <div style="font-size: 0.85rem; color: #8b949e;">周期锚定合理价</div>
-                <div id="out_hist_price" style="font-size: 1.5rem; font-weight: 600; color: var(--cyan);">$ 0.00</div>
-            </div>
-            <div>
-                <div style="font-size: 0.85rem; color: #8b949e;">ROE 偏离度</div>
-                <div id="out_roe_gap" style="font-size: 1.5rem; font-weight: 600;">+0.0%</div>
-            </div>
+            <br><div id="status_margin" class="status-tag">分析中</div>
         </div>
     </div>
 
     <div class="formula-box">
-        <strong>🧠 估值判词：</strong> 
-        <span id="logic_text">正在通过折现模型分析 250$ 的入场性价比...</span>
+        <strong>🧠 定价逻辑说明：</strong> 
+        该模型通过下年 EPS 结合所选周期的历史平均 PE 算出“一年后目标价”，再按你的要求回报率折算回当前。
+        若计算出的“理论合理价”低于现价，说明目前估值溢价已透支了你的预期回报。
     </div>
 </div>
 
 <script>
-    const HIST_DATA = {
-        "3": { pe: 32.50, roe: 32.5 },
-        "5": { pe: 30.14, roe: 31.0 }, //
-        "10": { pe: 26.72, roe: 25.0 } //
-    };
-
     function calculate() {
-        const basePrice = parseFloat(document.getElementById('base_price').value);
-        const basePe = parseFloat(document.getElementById('base_pe').value);
-        const currentPrice = parseFloat(document.getElementById('current_price').value);
-        const currentRoe = parseFloat(document.getElementById('in_roe').value);
+        const basePrice = 218.45; 
+        const basePe = 33.62; 
+        const currentPrice = parseFloat(document.getElementById('current_price').value) || 250;
         const targetRet = parseFloat(document.getElementById('target_return').value) / 100;
         const growth = parseFloat(document.getElementById('in_growth').value) / 100;
-        const period = document.getElementById('benchmark_period').value;
+        const histPe = parseFloat(document.getElementById('benchmark_pe').value);
         
-        const histPe = HIST_DATA[period].pe;
-        const histRoe = HIST_DATA[period].roe;
-
         // 1. 推算 EPS 和 实时 PE
         const eps = basePrice / basePe;
         const realPe = currentPrice / eps;
@@ -164,47 +115,29 @@
         document.getElementById('out_real_pe').innerText = realPe.toFixed(1);
         document.getElementById('txt_ret').innerText = (targetRet * 100).toFixed(1);
 
-        // 2. 折现定价 (Earnings Yield Method)
-        // 理论价 = [EPS * (1 + 增长)] / 折现率
-        const fairPrice = (eps * (1 + growth)) / targetRet;
+        // 2. 修正后的折现定价
+        // 理论价 = [EPS * (1+g) * 历史PE] / (1+r)
+        const fairPrice = (eps * (1 + growth) * histPe) / (1 + targetRet);
         document.getElementById('out_fair_price').innerText = "$ " + fairPrice.toFixed(2);
 
         // 3. 安全边际
         const margin = ((fairPrice - currentPrice) / fairPrice) * 100;
-        const marginEl = document.getElementById('out_margin');
-        marginEl.innerText = (margin > 0 ? "+" : "") + margin.toFixed(1) + "%";
-        marginEl.style.color = margin > 0 ? "var(--green)" : "var(--red)";
-
-        // 4. 历史回归价
-        const histFairPrice = eps * histPe;
-        document.getElementById('out_hist_price').innerText = "$ " + histFairPrice.toFixed(2);
+        document.getElementById('out_margin').innerText = (margin > 0 ? "+" : "") + margin.toFixed(1) + "%";
         
-        const roeGap = ((currentRoe - histRoe) / histRoe) * 100;
-        const roeGapEl = document.getElementById('out_roe_gap');
-        roeGapEl.innerText = (roeGap > 0 ? "+" : "") + roeGap.toFixed(1) + "%";
-        roeGapEl.style.color = roeGap > 0 ? "var(--green)" : "var(--red)";
+        const cardMargin = document.getElementById('card_margin');
+        const statusMargin = document.getElementById('status_margin');
+        const marginText = document.getElementById('margin_text');
 
-        // UI 逻辑判断
-        const statusPe = document.getElementById('status_pe');
-        const cardPe = document.getElementById('card_pe');
-        if (realPe > histPe * 1.2) {
-            statusPe.innerText = "高估值警报"; statusPe.className = "status-tag status-red"; cardPe.style.borderTopColor = "var(--red)";
+        if (margin > 0) {
+            cardMargin.style.borderTopColor = "var(--green)";
+            statusMargin.innerText = "价值区间"; statusMargin.className = "status-tag status-green";
+            marginText.innerText = "具备盈利安全垫";
         } else {
-            statusPe.innerText = "合理运行"; statusPe.className = "status-tag status-cyan"; cardPe.style.borderTopColor = "var(--cyan)";
+            cardMargin.style.borderTopColor = "var(--red)";
+            statusMargin.innerText = "溢价运行"; statusMargin.className = "status-tag status-red";
+            marginText.innerText = "回报率可能无法达标";
         }
-
-        // 判词更新
-        let logic = `在 250$ 价位下，你的<b>要求回报率 (${(targetRet*100).toFixed(1)}%)</b> 对比目前的盈利能力`;
-        if (margin > 10) {
-            logic += ` 展现出极佳的性价比，安全边际为 <b>${margin.toFixed(1)}%</b>。`;
-        } else if (margin > -10) {
-            logic += ` 处于平衡区间。当前的溢价已被未来的增长预期所消化。`;
-        } else {
-            logic += ` 显得过于乐观。目前的市场价格已经透支了太多的增长，安全边际为负。`;
-        }
-        document.getElementById('logic_text').innerHTML = logic;
     }
-
     window.onload = calculate;
 </script>
 </body>
